@@ -1,10 +1,50 @@
+"""
+Resonance Simultation:
+
+Inputs:
+-mass of system m (kg)
+-spring constant k (N/m)
+-damping coefficient b (kg/s)
+-driving frequency F (rad/s)       
+
+Author: Robin Loughlin
+Course: Theoretical Physics
+Date: 28-09-2026
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 
+def validate(m, b, k):
+    """
+    Tests validity of parameters for oscillation- raises an error if not valid
+    """
+
+    if m <= 0:
+        raise ValueError(
+        "The oscillator must have a mass greater than 0 to have a natural frequency"
+        )               
+    
+    if b < 0:
+        raise ValueError(
+            "b must me a non negative number, as negative damping adds energy to the system"
+        )
+
+    if k <= 0:
+        raise ValueError(
+            "k must me a positive number to provide a restoring force"
+        )
+
+
 def time_simulate(m , b, k, omega_drive, F=1.0, x0=1.0, v0=0.0, dt=0.01, step=1000):
+    """
+    Simulates a damped oscillator, returns its position at each instant in time
+    """
+
+    validate(m, b, k)
 
     omega_naught = np.sqrt(k / m)
-    gamma = b / (2 * m)
     A = (F / m)
 
     x = np.zeros(step)
@@ -20,6 +60,11 @@ def time_simulate(m , b, k, omega_drive, F=1.0, x0=1.0, v0=0.0, dt=0.01, step=10
     return t, x
 
 def resonance_curve(m, b, k, F=1.0, f_step=1000, span=5.0):
+    """
+    Creates a curve of amplitude against driving frequency for the forced oscillator to show resonance
+    """
+
+    validate(m, b, k)
 
     omega_naught = np.sqrt(k / m)
     gamma = b / (2 * m)
@@ -31,26 +76,38 @@ def resonance_curve(m, b, k, F=1.0, f_step=1000, span=5.0):
     return omega, amplitude
 
 def main():
+    """
+    Inputs, plots
+    """
 
-    dt, step, f_step = 0.01, 1000, 1000
+    try:
+        """
+        Attempts value inputs, breaks if values do not produce an oscillator
+        """
+        
+        m = float(input("Enter the value for m: "))
+        b = float(input("Enter the value for b: "))
+        k = float(input("Enter the value for k: "))
+        omega_drive = float(input("Enter the driving frequency: "))
 
-    m = float(input("Enter the value for m: "))
-    b = float(input("Enter the value for b: "))
-    k = float(input("Enter the value for k: "))
-    omega_drive = float(input("Enter the driving frequency: "))
-    omega_naught = np.sqrt(k / m)
+        t, x = time_simulate(m, b, k, omega_drive)
+        omega, x_res = resonance_curve(m, b, k)
+        validate(m, b, k)
 
-    t, x = time_simulate(m, b, k, omega_drive)
-    omega, x_res = resonance_curve(m, b, k) 
+    except ValueError as error:
+        print(f"Error: {error}")
+        return
+
+    omega_naught = np.sqrt(k / m) 
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11,4))
 
-    ax1.plot(t, x)
+    ax1.plot(t, x)                                         # Oscillator plot
     ax1.set_title("Time-domain response")
     ax1.set_xlabel("time / s")
     ax1.set_ylabel("position / m")
 
-    ax2.plot(omega, x_res)
+    ax2.plot(omega, x_res)                                                          # Resonance plot
     ax2.axvline(omega_naught, color="r", linestyle="--", label=r"$\omega_0$")
     ax2.axvline(omega_drive, color="g", linestyle=":", label=r"$\omega_{drive}$")
     ax2.set_title("Resonance curve")
